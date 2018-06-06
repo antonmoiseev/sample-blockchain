@@ -1,0 +1,14 @@
+{
+  "name": "blockchain",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "concurrently 'tsc -w' serve"
+  },
+  "devDependencies": {
+    "concurrently": "^3.5.1",
+    "serve": "^7.2.0",
+    "typescript": "^2.8.3"
+  }
+}
