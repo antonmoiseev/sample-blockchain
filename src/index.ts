@@ -1,124 +1,74 @@
-type Block = {
-  index: number;
-  timestamp: number;
-  transactions: Transaction[];
-  proof: number;
-  previousHash: string;
+import * as crypto from 'crypto';
+
+// Here we can also make a cross-reference to the future chapter
+// where we introduce mapped types and can just map the regular 
+// Block class to a readonly companion type:
+//
+//   class Block {...}
+//   type ReadonlyBlock = Readonly<Block>;
+class Block {
+  readonly nonce: number;
+  readonly hash: string;
+  
+  constructor(
+    readonly index: number,
+    readonly previousHash: string,
+    readonly timestamp: number,
+    readonly data: any
+  ) {
+    const { nonce, hash } = this.mine();
+    this.nonce = nonce;
+    this.hash = hash;
+  }
+
+  calculateHash(nonce: number): string {
+    const data = this.index + this.previousHash + this.timestamp + JSON.stringify(this.data) + nonce;
+    return crypto.createHash('sha256').update(data).digest('hex');
+  }
+
+  private mine(): { nonce: number, hash: string } {
+    let hash: string;
+    let nonce = 0;
+    
+    do {
+      hash = this.calculateHash(++nonce);
+    } while (hash.startsWith('00000') === false);
+
+    return { nonce, hash };
+  }
 };
 
-type Transaction = {
-  sender: string;
-  recipient: string;
-  amount: number;
-};
-
-type BlockchainNode = {
-  addTransaction(transaction: Transaction): number;
-  newBlock(proof: number, previousHash?: string): Promise<Block>;
-  findProof(lastProof: number): Promise<number>;
-
-  lastBlock: Block;
-};
-
-class BlockchainBrowserNode implements BlockchainNode {
+class Blockchain {
   private readonly chain: Block[] = [];
-  private currentTransactions: Transaction[] = [];
 
-  constructor() {
-    this.newBlock(100, '1');
-  }
-
-  addTransaction(transaction: Transaction): number {
-    // Adds a new transaction to the list of transactions.
-    this.currentTransactions.push(transaction);
-
-    return this.lastBlock.index + 1;
-  }
-
-  async newBlock(proof: number, previousHash?: string): Promise<Block> {
-    // Creates a new block and adds it to the chain.
-    const block: Block = {
-      index: this.chain.length + 1,
-      timestamp: Date.now(),
-      transactions: [ ...this.currentTransactions ],
-      previousHash: previousHash || await hash(this.lastBlock),
-      proof
-    };
-
-    // Reset the current list of transactions
-    this.currentTransactions = [];
-    this.chain.push(block);
-    return block;
-  }
-
-  async findProof(lastProof: number): Promise<number> {
-    let proof = 0;
-
-    while (await this.isValidProof(lastProof, proof) === false) {
-      proof++;
-    }
-
-    return proof;
-  }
-
-  get lastBlock(): Block {
-    // Returns the last Block in the chain.
+  get latestBlock(): Block {
     return this.chain[this.chain.length - 1];
   }
 
-  private async isValidProof(lastProof: number, proof: number): Promise<boolean> {
-    const guess = `${lastProof}${proof}`;
-    const guessHash = await sha256(guess);
-    return guessHash.startsWith('0000');
+  constructor() {
+    // Create the genesis block.
+    this.chain.push(new Block(0, '0', Date.now(), 'Genesis block'));
+  }
+
+  addBlock(data: any): void {
+    const block = new Block(
+      this.latestBlock.index + 1,
+      this.latestBlock.hash,
+      Date.now(),
+      data
+    );
+
+    this.chain.push(block);
   }
 }
 
-async function hash(block: Block): Promise<string> {
-  return await sha256(JSON.stringify(block));
-}
+console.log('Initializing the blockchain, creating the genesis block...');
+const blockchain = new Blockchain();
 
+console.log('Mining block #1...');
+blockchain.addBlock('First block');
 
+console.log('Mining block #2...');
+blockchain.addBlock('Second block');
 
-(async function main() {
-  const bc = new BlockchainBrowserNode();
-  console.time("adding 4 blocks");
-  await addBlock(bc, { sender: 'Emma', recipient: 'Fred', amount: 5 });
-  await addBlock(bc, { sender: 'Fred', recipient: 'Emma', amount: 7 });
-  await addBlock(bc, { sender: 'Emma', recipient: 'James', amount: 9 });
-  await addBlock(bc, { sender: 'James', recipient: 'John', amount: 2 });
-  console.timeEnd("adding 4 blocks");
-})();
-
-async function addBlock(bc: BlockchainBrowserNode, trx: Transaction): Promise<void> {
-  console.log('Adding transaction...');
-  bc.addTransaction(trx);
-
-  console.log('Calculating proof...');
-  const lastBlock = bc.lastBlock;
-  const lastProof = lastBlock.proof;
-  const proof = await bc.findProof(lastProof);
-
-  console.log('Calculating hash...');
-  const prevHash = await hash(lastBlock);
-
-  console.log('Creating block...');
-  const block = await bc.newBlock(proof, prevHash);
-
-  console.log(JSON.stringify(block, null, 2));
-}
-
-async function sha256(message: string) {
-
-  // encode as UTF-8
-  const msgBuffer = new TextEncoder().encode(message);
-
-  // hash the message
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-  
-  // convert ArrayBuffer to Array
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-
-  // convert bytes to hex string
-  const hashHex = hashArray.map(b => ('00' + b.toString(16)).slice(-2)).join('');
-  return hashHex;
-}
+console.log(JSON.stringify(blockchain, null, 2));
