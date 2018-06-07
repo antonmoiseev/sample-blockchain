@@ -1,14 +1,9 @@
 {
-  "name": "blockchain",
+  "name": "getting_started_with_typescript_unit1",
   "version": "1.0.0",
-  "main": "index.js",
   "license": "MIT",
-  "scripts": {
-    "start": "ts-node src/index.ts"
-  },
   "devDependencies": {
     "@types/node": "^10.3.1",
-    "ts-node": "^6.1.0",
     "typescript": "^2.8.3"
   }
 }

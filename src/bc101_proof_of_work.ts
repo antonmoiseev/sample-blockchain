@@ -1,35 +1,29 @@
 import * as crypto from 'crypto';
 
-// Here we can also make a cross-reference to the future chapter
-// where we introduce mapped types and can just map the regular 
-// Block class to a readonly companion type:
-//
-//   class Block {...}
-//   type ReadonlyBlock = Readonly<Block>;
 class Block {
   readonly nonce: number;
   readonly hash: string;
-  
-  constructor(
+
+  constructor (
     readonly index: number,
     readonly previousHash: string,
     readonly timestamp: number,
-    readonly data: any
+    readonly data: string
   ) {
     const { nonce, hash } = this.mine();
     this.nonce = nonce;
     this.hash = hash;
   }
 
-  calculateHash(nonce: number): string {
-    const data = this.index + this.previousHash + this.timestamp + JSON.stringify(this.data) + nonce;
+  private calculateHash(nonce: number): string {
+    const data = this.index + this.previousHash + this.timestamp + this.data + nonce;
     return crypto.createHash('sha256').update(data).digest('hex');
   }
 
   private mine(): { nonce: number, hash: string } {
     let hash: string;
     let nonce = 0;
-    
+
     do {
       hash = this.calculateHash(++nonce);
     } while (hash.startsWith('00000') === false);
@@ -41,7 +35,7 @@ class Block {
 class Blockchain {
   private readonly chain: Block[] = [];
 
-  get latestBlock(): Block {
+  private get latestBlock(): Block {
     return this.chain[this.chain.length - 1];
   }
 
@@ -50,7 +44,7 @@ class Blockchain {
     this.chain.push(new Block(0, '0', Date.now(), 'Genesis block'));
   }
 
-  addBlock(data: any): void {
+  addBlock(data: string): void {
     const block = new Block(
       this.latestBlock.index + 1,
       this.latestBlock.hash,
