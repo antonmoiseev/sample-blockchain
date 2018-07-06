@@ -2,8 +2,12 @@
   "name": "getting_started_with_typescript_unit1",
   "version": "1.0.0",
   "license": "MIT",
+  "scripts": {
+    "start": "serve"
+  },
   "devDependencies": {
-    "@types/node": "^10.3.1",
-    "typescript": "^2.8.3"
+    "@types/node": "^10.5.1",
+    "serve": "^9.1.2",
+    "typescript": "^2.9.2"
   }
 }

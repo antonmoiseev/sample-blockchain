@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blockchain</title>
+    <script type="module" src="../../../dist/unit2/browser/main.js"></script>
+    <style>
+        .fields {
+            display: grid;
+            grid-template-columns: 100px 1fr;
+        }
+
+        #addTransaction {
+            height: 30px;
+            width: 100px;
+        }
+    </style>
+</head>
+<body>
+    <!-- <pre #status>Initializing the blockchain, creating the genesis block...</pre> -->
+
+    <fieldset>
+        <legend>New transaction</legend>
+        <div class="fields">
+            <label for="from">From:</label>    <input id="from"   placeholder="Enter sender's name">
+            <label for="to">To:</label>        <input id="to"     placeholder="Enter recipient's name">
+            <label for="amount">Amount:</label><input id="amount" placeholder="Enter amount to send" type="number">
+        </div>
+        <button id="addTransaction">ADD</button>
+    </fieldset>
+
+    <div><button id="mine">Mine block</button></div>
+    
+    <label>
+        Pending transactions:
+        <pre id="pendingTransactions"></pre>
+    </label>
+
+    <label>
+        Block chain:
+        <pre id="blockchain"></pre>
+    </label>
+</body>
+</html>
+<!-- 
+<script>
+    (async function () {
+        const statusElement = document.getElementById('status');
+        const fromElement = document.getElementById('from');
+        const toElement = document.getElementById('to');
+        const amountElement = document.getElementById('amount');
+        const pendingTransactionsElement = document.getElementById('pendingTransactions');
+        const blockchainElement = document.getElementById('blockchain');
+        const addTransactionButton = document.getElementById('addTransaction');
+        const mineButton = document.getElementById('mine');
+
+        disable();
+        const blockchain = new Blockchain();
+        await blockchain.createGenesisBlock();
+        enable();
+
+        addTransactionButton.onclick = function () {
+            const transaction = {
+                from: fromElement.value,
+                to: toElement.value,
+                amount: amount.value,
+            };
+
+            const previousTransactions = JSON.parse(pendingTransactionsElement.textContent || '[]');
+            pendingTransactionsElement.textContent = JSON.stringify([ ...previousTransactions, transaction ], null, 2);
+            fromElement.value = '';
+            toElement.value = '';
+            amountElement.value = 0;
+        };
+
+        mineButton.onclick = async function () {
+            const pendingTransactions = JSON.parse(pendingTransactionsElement.textContent || '[]');
+            await blockchain.addBlock(pendingTransactions);
+            blockchainElement.textContent = JSON.stringify(blockchain, null, 2);
+            pendingTransactionsElement.textContent = '[]';
+        }
+
+        function enable() {
+            fromElement.disabled = false;
+            toElement.disabled = false;
+            amountElement.disabled = false;
+            mineButton.disabled = false;
+        }
+
+        function disable() {
+            fromElement.disabled = true;
+            toElement.disabled = true;
+            amountElement.disabled = true;
+            mineButton.disabled = true;
+        }
+    })();
+</script> -->
