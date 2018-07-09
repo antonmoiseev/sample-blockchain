@@ -26,7 +26,7 @@ class Block {
 
     do {
       hash = this.calculateHash(++nonce);
-    } while (hash.startsWith('00000') === false);
+    } while (hash.startsWith('0000') === false);
 
     return { nonce, hash };
   }
