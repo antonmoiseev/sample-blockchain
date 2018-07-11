@@ -1,65 +1,88 @@
-import { Blockchain } from '../lib/bc_transactions.js';
+import { Blockchain, Block } from '../lib/bc_transactions.js';
 
-const amountElement = document.getElementById('amount') as HTMLInputElement;
-const fromElement = document.getElementById('from') as HTMLInputElement;
-const toElement = document.getElementById('to') as HTMLInputElement;
+enum Status {
+  Initialization = '⏳ Initializing the blockchain, creating the genesis block...',
+  AddTransaction = '💸 Add one or more transactions.',
+  ReadyToMine    = '✅ Ready to mine a new block.',
+  MineInProgress = '⏳ Mining a new block...'
+}
 
-const pendingTransactionsElement = document.getElementById('pendingTransactions');
-const blockchainElement = document.getElementById('blockchain');
-const addTransactionButton = document.getElementById('addTransaction');
-const mineButton = document.getElementById('mine');
+const amountEl              = document.getElementById('amount') as HTMLInputElement;
+const blocksEl              = document.getElementById('blocks') as HTMLDivElement;
+const confirmBtn            = document.getElementById('confirm') as HTMLButtonElement;
+const pendingTransactionsEl = document.getElementById('pending-transactions') as HTMLPreElement;
+const recipientEl           = document.getElementById('recipient') as HTMLInputElement;
+const senderEl              = document.getElementById('sender') as HTMLInputElement;
+const statusEl              = document.getElementById('status') as HTMLParagraphElement;
+const transferBtn           = document.getElementById('transfer') as HTMLButtonElement;
 
-(async function main() {
-    console.log('⏳ Initializing the blockchain, creating the genesis block...');
-    const bc = new Blockchain();
-    await bc.createGenesisBlock();
-    console.log('✅ Initializion done.');
+(async function main(): Promise<void> {
+  // Subscribe to events.
+  transferBtn.addEventListener('click', addTransaction);
+  confirmBtn.addEventListener('click', mineBlock);
 
-    addTransactionButton.onclick = function () {
-        bc.createTransaction({
-            amount: parseInt(amountElement.value),
-            sender: fromElement.value,
-            recipient: toElement.value,
-        });
+  statusEl.textContent = Status.Initialization;
 
-        pendingTransactionsElement.textContent = JSON.stringify(bc.pendingTransactions, null, 2);
+  const blockchain = new Blockchain();
+  await blockchain.createGenesisBlock();
+  blocksEl.innerHTML = blockchain.chain.map((b, i) => generateBlockHtml(b, i)).join('');
 
-        // Reset form
-        fromElement.value = '';
-        toElement.value = '';
-        amountElement.value = '0';
-    };
+  statusEl.textContent = Status.AddTransaction;
+  toggleState(true, false);
 
-    mineButton.onclick = async function () {
-        await bc.minePendingTransactions();
-        blockchainElement.textContent = JSON.stringify(bc, null, 2);
-        pendingTransactionsElement.textContent = '[]';
-    }
+  function addTransaction() {
+    blockchain.createTransaction({
+      sender: senderEl.value,
+      recipient: recipientEl.value,
+      amount: parseInt(amountEl.value),
+    });
+
+    toggleState(false, false);
+    pendingTransactionsEl.textContent = blockchain.pendingTransactions.map(t =>
+      `${t.sender} → ${t.recipient}: $${t.amount}`).join('\n');
+    statusEl.textContent = Status.ReadyToMine;
+    
+    // Reset form's value.
+    senderEl.value = '';
+    recipientEl.value = '';
+    amountEl.value = '0';
+  }
+
+  async function mineBlock() {
+    statusEl.textContent = Status.MineInProgress;
+    toggleState(true, true);
+    await blockchain.minePendingTransactions();
+
+    pendingTransactionsEl.textContent = 'No pending transactions at the moment.';
+    statusEl.textContent = Status.AddTransaction;
+    blocksEl.innerHTML = blockchain.chain.map((b, i) => generateBlockHtml(b, i)).join('');
+    toggleState(true, false);
+  }
 })();
 
+function toggleState(confirmation: boolean, transferForm: boolean): void {
+  transferBtn.disabled = amountEl.disabled = senderEl.disabled = recipientEl.disabled = transferForm;
+  confirmBtn.disabled = confirmation;
+}
 
 
-
-
-
-
-
-
-// (async function main (): Promise<void> {
-//     console.log('⏳ Initializing the blockchain, creating the genesis block...');
-
-//     const bc = new Blockchain();
-//     await bc.createGenesisBlock();
-
-//     bc.createTransaction({ sender: 'John', recipient: 'Kate', amount: 50 });
-//     bc.createTransaction({ sender: 'Kate', recipient: 'Mike', amount: 10 });
-
-//     await bc.minePendingTransactions();
-
-//     bc.createTransaction({ sender: 'Alex', recipient: 'Rosa', amount: 15 });
-//     bc.createTransaction({ sender: 'Gina', recipient: 'Rick', amount: 60 });
-
-//     await bc.minePendingTransactions();
-
-//     console.log(JSON.stringify(bc, null, 2));
-// })();
+function generateBlockHtml(block: Block, index: number) {
+  return `
+    <div class="block">
+      <span class="block__index">#${index}</span>
+      <span class="block__timestamp">${new Date(block.timestamp).toLocaleTimeString()}</span>
+      <div class="prev-hash">
+        <div class="hash-title">← PREV HASH</div>
+        <div class="hash-value">${block.previousHash}</div>
+      </div>
+      <div class="this-hash">
+        <div class="hash-title">THIS HASH</div>
+        <div class="hash-value">${block.hash}</div>
+      </div>
+      <div class="block__transactions">
+        <div class="hash-title">TRANSACTIONS</div>
+        <pre class="transactions-value">${block.transactions.map(t => `${t.sender} → ${t.recipient} - $${t.amount}`)}</pre>
+      </div>
+    </div>
+  `;
+}

@@ -37,11 +37,15 @@ export class Block {
 }
 
 export class Blockchain {
-  private readonly chain: Block[] = [];
+  private readonly _chain: Block[] = [];
   private _pendingTransactions: Transaction[] = [];
 
   private get latestBlock(): Block {
-    return this.chain[this.chain.length - 1];
+    return this._chain[this._chain.length - 1];
+  }
+
+  get chain(): Block[] {
+    return [ ...this._chain ];
   }
 
   get pendingTransactions(): Transaction[] {
@@ -51,7 +55,7 @@ export class Blockchain {
   async createGenesisBlock(): Promise<void> {
     const genesisBlock = new Block('0', Date.now(), []);
     await genesisBlock.mine();
-    this.chain.push(genesisBlock);
+    this._chain.push(genesisBlock);
   }
 
   createTransaction(transaction: Transaction): void {
@@ -61,7 +65,7 @@ export class Blockchain {
   async minePendingTransactions(): Promise<void> {
     const block = new Block(this.latestBlock.hash, Date.now(), this._pendingTransactions);
     await block.mine();
-    this.chain.push(block);
+    this._chain.push(block);
     this._pendingTransactions = [];
   }
 }
